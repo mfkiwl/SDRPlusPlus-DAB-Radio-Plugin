@@ -20,8 +20,8 @@ Install vcpkg and integrate install. Refer to instructions [here](https://github
 ## Building plugin
 If the vcpkg toolchain file is in a different location modify the ```cmake_configure.sh``` file.
 
-1. Run ```./toolchains/cmake_configure.sh``` to configure cmake.
-2. Run ```./toolchains/build.sh``` to compile plugin.
+1. Run ```./toolchains/cmake_configure.bat``` to configure cmake.
+2. Run ```./toolchains/build.bat``` to compile plugin.
 3. Run ```./toolchains/create_package.sh``` to place plugin files into folder.
 
 ## Install files
@@ -29,3 +29,7 @@ Copy the contents of ```plugin_package/``` into your ```modules``` folder in you
 
 Make sure that the version of SDR++ in ```vendor/sdrplusplus``` is the same as your SDR++ installation. 
 
+# Additional notes
+We don't use the Ninja build generator since libcorrect and libfec in sdrpp_core create conflicting build outputs. This is because it compiles static and dynamic library versions of the same underlying library. Ninja doesn't realise this and creates conflicting .lib output files, which ninja only detects after the fact.
+
+To get around this we use msbuild which doesn't have this naming issue. However builds tend to be abit slower due to poorer multithreading.
