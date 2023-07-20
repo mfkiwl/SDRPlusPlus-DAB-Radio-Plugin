@@ -17,23 +17,20 @@
 
 ConfigManager config; // extern
 
+void DAB_Decoder_Sink_Handler(dsp::complex_t *buf, int count, void *ctx) {
+    auto *instance = reinterpret_cast<DAB_Decoder_Sink*>(ctx);
+    auto *_buf = reinterpret_cast<std::complex<float>*>(buf);
+    instance->Process(_buf, count);
+}
+
 DAB_Decoder_Sink::DAB_Decoder_Sink(std::shared_ptr<DAB_Decoder> _decoder) 
-: decoder(_decoder) {}
+: decoder(_decoder) {
+    setHandler(DAB_Decoder_Sink_Handler, reinterpret_cast<void*>(this));
+}
 
 DAB_Decoder_Sink::~DAB_Decoder_Sink() {
     if (!base_type::_block_init) return;
     base_type::stop();
-}
-
-int DAB_Decoder_Sink::run() {
-    int count = base_type::_in->read();
-    if (count < 0) { return -1; }
-
-    auto* buf = base_type::_in->readBuf;
-    Process(reinterpret_cast<std::complex<float>*>(buf), count);
-
-    base_type::_in->flush();
-    return count;
 }
 
 void DAB_Decoder_Sink::Process(const std::complex<float>* x, const int N) {
@@ -85,10 +82,15 @@ DABModule::DABModule(std::string _name)
     };
 
     const int Faudio_in = (int)dab_decoder->GetAudioPlayer().GetSampleRate();
+    
 
+    audio_resampler_window.init(Faudio_in/2.0f, Faudio_in/2.0f, Faudio_in);
     audio_resampler.init(
         &(audio_player_stream->GetOutputStream()),
+        &audio_resampler_window,
         Faudio_in, Faudio_in);
+    audio_resampler_window.setSampleRate(Faudio_in * audio_resampler.getInterpolation());
+    audio_resampler.updateWindow(&audio_resampler_window);
 
     audio_stream.init(
         &audio_resampler.out, 
@@ -170,5 +172,7 @@ void DABModule::RenderMenu() {
 }
 
 void DABModule::OnSampleRateChange(float new_sample_rate) {
-    audio_resampler.setOutSamplerate(new_sample_rate);
+    audio_resampler.setOutSampleRate(new_sample_rate);
+    audio_resampler_window.setSampleRate(new_sample_rate * audio_resampler.getInterpolation());
+    audio_resampler.updateWindow(&audio_resampler_window);
 }

@@ -1,9 +1,9 @@
 #include <config.h>
 #include <core.h>
+#include <options.h>
 #include <string>
 
 #include "dab_module.h"
-
 #include <easylogging++.h>
 #include "dab/logging.h"
 
@@ -39,7 +39,7 @@ MOD_EXPORT void _INIT_() {
     basic_scraper_logger->configure(scraper_conf);
 
     json def = json({});
-    config.setPath(core::args["root"].s() + "/dab_plugin_config.json");
+    config.setPath(options::opts.root + "/dab_plugin_config.json");
     config.load(def);
     config.enableAutoSave();
 }
