@@ -18,11 +18,11 @@ Install Visual Studio 2022 with C++ build kit.
 Install vcpkg and integrate install. Refer to instructions [here](https://github.com/microsoft/vcpkg#quick-start-windows)
 
 ## Building plugin
-If the vcpkg toolchain file is in a different location modify the ```cmake_configure.sh``` file.
+If the vcpkg toolchain file is in a different location modify the ```cmake_configure.bat``` file.
 
-1. Run ```./toolchains/cmake_configure.bat``` to configure cmake.
-2. Run ```./toolchains/build.bat``` to compile plugin.
-3. Run ```./toolchains/create_package.sh``` to place plugin files into folder.
+1. Run ```./toolchains/windows/cmake_configure.bat``` to configure cmake.
+2. Run ```./toolchains/windows/build.bat``` to compile plugin.
+3. Run ```./toolchains/windows/create_package.sh``` to place plugin files into folder.
 
 ## Install files
 Copy the contents of ```plugin_package/``` into your ```modules``` folder in your SDR++ installation.

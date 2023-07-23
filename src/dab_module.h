@@ -64,7 +64,7 @@ private:
     EventHandler<float> ev_handler_sample_rate_change;
 public:
     DABModule(std::string _name); 
-    ~DABModule();
+    virtual ~DABModule();
 
     void postInit();
     void enable(); 

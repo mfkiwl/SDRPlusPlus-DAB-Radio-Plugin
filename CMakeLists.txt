@@ -17,25 +17,21 @@ endif()
 
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+
+# build sdrpp_core
+# sdrpp_core imports libraries using vcpkg or pkgconfig
+# refer to ./toolchains/ubuntu/install_packages.sh or ./vcpkg.json for dependencies
+# we need to build volk from source because vcpkg doesn't have it
+# also when linking to it from ubuntu we get errors linking with our shared library plugin
 find_package(volk REQUIRED)
-# for dab plugin
-find_package(audio_mixer REQUIRED)
-
-# vcpkg
-find_package(OpenGL REQUIRED)
-find_package(glfw3 CONFIG REQUIRED)
-find_package(zstd CONFIG REQUIRED)
-# for dab modules
-find_package(FFTW3f CONFIG REQUIRED)
-set(FFTW3_LIBS FFTW3::fftw3f)
-
-# compile sdrplusplus core module for plugin building
 set(OPT_BACKEND_GLFW ON CACHE BOOL "Enable glfw backend")
 add_subdirectory(${CMAKE_SOURCE_DIR}/vendor/sdrplusplus/core)
 set_target_properties(sdrpp_core PROPERTIES CXX_STANDARD 17)
 
 
-# include libraries for dab modules
+# build dab modules
+# copied from ./vendor/DAB-Radio/CMakeLists.txt 
 set(DAB_RADIO_DIR ${CMAKE_SOURCE_DIR}/vendor/DAB-Radio)
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${DAB_RADIO_DIR}/cmake")
 find_package(faad2 REQUIRED)
@@ -43,28 +39,42 @@ find_package(easyloggingpp REQUIRED)
 find_package(fmt REQUIRED)
 set(viterbi_DIR ${DAB_RADIO_DIR}/vendor/viterbi_decoder)
 find_package(viterbi CONFIG REQUIRED)
+if(DEFINED MSVC)
+    # vcpkg
+    find_package(FFTW3f CONFIG REQUIRED)
+    set(FFTW3_LIBS FFTW3::fftw3f)
+else()
+    # pkgconfig
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(fftw3f REQUIRED IMPORTED_TARGET fftw3f)
+    set(FFTW3_LIBS PkgConfig::fftw3f)
+endif()
 # build dab modules
 add_subdirectory(${DAB_RADIO_DIR}/src/ofdm)
 add_subdirectory(${DAB_RADIO_DIR}/src/dab)
 add_subdirectory(${DAB_RADIO_DIR}/src/basic_radio)
-# simd and math compile options
-if(NOT ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "aarch64")
-    if(DEFINED MSVC)
-        # NOTE: If your CPU doesn't support these instructions, modify /arch:?
-        target_compile_options(ofdm_core PRIVATE /fp:fast /arch:AVX2)
-        target_compile_options(dab_core PRIVATE /fp:fast /arch:AVX2)
-    else()
-        # NOTE: We are optimising specifically for your CPU's microarchitecture
-        #       This is okay since we don't ship prebuilt binaries for linux distributions
-        target_compile_options(ofdm_core PRIVATE -march=native -ffast-math)
-        target_compile_options(dab_core PRIVATE -march=native -ffast-math)
-    endif()
-else()
-    target_compile_options(ofdm_core PRIVATE -ffast-math)
-    target_compile_options(dab_core PRIVATE -ffast-math)
-endif()
-
-
 # build dab plugin
+find_package(audio_mixer REQUIRED)
 add_subdirectory(${CMAKE_SOURCE_DIR}/src)
+
+# simd and math compile options
+function(set_simd_options target)
+    if(NOT ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "aarch64")
+        if(DEFINED MSVC)
+            # NOTE: If your CPU doesn't support these instructions, modify /arch:?
+            target_compile_options(${target} PRIVATE /fp:fast /arch:AVX2)
+        else()
+            # NOTE: We are optimising specifically for your CPU's microarchitecture
+            #       This is okay since we don't ship prebuilt binaries for linux distributions
+            target_compile_options(${target} PRIVATE -march=native -ffast-math)
+        endif()
+    else()
+        target_compile_options(${target} PRIVATE -ffast-math)
+    endif()
+endfunction()
+set_simd_options(ofdm_core)
+set_simd_options(dab_core)
+set_simd_options(audio_mixer)
+set_simd_options(dab_plugin)
+
 

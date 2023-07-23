@@ -1,5 +1,5 @@
 #!/bin/sh
-build_dir="build/src/Release"
+build_dir="build-windows/src/Release"
 output_dir="plugin_package"
 rm -rf ${output_dir}
 mkdir -p ${output_dir}

@@ -1,7 +1,7 @@
 @echo off
 
 set PROJ_PATH="%2"
-if "%~2" == "" set PROJ_PATH="build\src\dab_plugin.vcxproj" 
+if "%~2" == "" set PROJ_PATH="build-windows\src\dab_plugin.vcxproj" 
 
 set BUILD_REF="true"
 if "%3" == "--ignore-ref" set BUILD_REF="false" 
