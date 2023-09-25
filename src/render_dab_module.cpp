@@ -1,7 +1,7 @@
 #include "./render_dab_module.h"
 
 #include <cmath>
-#include <fmt/core.h>
+#include <spdlog/fmt/fmt.h>
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
 #include <gui/widgets/constellation_diagram.h>
